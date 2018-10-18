@@ -7,7 +7,7 @@ from glob import glob
 import spacy
 nlp = spacy.load('en')
 import errno
-from multiprocessing import Pool, cpu_counts
+from multiprocessing import Pool, cpu_count
 from unidecode import unidecode
 
 def mkdir_p(path):
@@ -26,13 +26,16 @@ def remove_non_ascii(text):
         return str(unidecode(str(text)))
 
 def run(fl):
-    filename = fl.split('/')[-1]
+    fl_temp = os.listdir(fl)[0]
+    fl = os.path.join(fl, fl_temp)
+    filename = fl.split('/')[-2]#ob(fl)[0]
     text = open(fl).read().strip()
     text = '\n'.join(text.split('\n'))
     doc = nlp.make_doc(remove_non_ascii(text))
 
     for proc in nlp.pipeline:
-        doc = proc(doc)
+        print(proc)
+        doc = proc[1](doc)
 
     fwl = open('{}/{}'.format(linedir, filename),'w')
     fwp = open('{}/{}'.format(posdir, filename),'w')
@@ -107,8 +110,10 @@ mkdir_p(posdir)
 mkdir_p(nerdir)
 
 filelist = glob('{}/*'.format(article_dir))
+print (article_dir)
 print('processing {} files...'.format(len(filelist)))
 
-pool = Pool(cpu_counts())
+pool = Pool(cpu_count())
 pool.map(run, filelist)
+#run(filelist[0])
 pool.close()

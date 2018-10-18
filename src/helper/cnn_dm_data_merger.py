@@ -22,22 +22,22 @@ from collections import defaultdict
 import pandas as pd
 import numpy as np
 from collections import Counter
-from tensorflow.core.example import example_pb2
+import tensorflow as tf
 import struct
 
 root_dir = sys.argv[1]
 outfile = sys.argv[2]
 filter_file = sys.argv[3]
 
-datasets = ['cnn','dailymail']
+datasets = [' ']
 df = defaultdict(list)
 fw = open('{}/{}'.format(root_dir,outfile),'w')
 for dataset in datasets:
-    working_dir = os.path.join(root_dir, dataset)
+    working_dir = root_dir #os.path.join(root_dir, dataset)
     files = glob('{}/article_spacy_line/*'.format(working_dir))
     print(len(files))
-    filter_files = [k.strip() for k in open(filter_file).readlines()]
-    files = [k for k in files if k.split('/')[-1] not in filter_files]
+    #filter_files = [k.strip() for k in open(filter_file).readlines()]
+    #files = [k for k in files if k.split('/')[-1] not in filter_files]
     print(len(files))
     for fl in files:
         filename = fl.split('/')[-1]
@@ -53,13 +53,13 @@ for dataset in datasets:
         fasn = open('{}/article_spacy_ner/{}'.format(working_dir,filename))
         lines = ['<s> {} </s> '.format(' '.join(k.strip().split())) for k in fasn]
         article_ner = '<d> {}</d>'.format(''.join(lines))
-        ftsl = open('{}/title_spacy_line/{}'.format(working_dir,filename))
+        ftsl = open('{}/answer_spacy_line/{}'.format(working_dir,filename))
         lines = ['<s> {} </s> '.format(' '.join(k.strip().split())) for k in ftsl]
         title_line = '<d> {}</d>'.format(''.join(lines))
-        ftsp = open('{}/title_spacy_pos/{}'.format(working_dir,filename))
+        ftsp = open('{}/answer_spacy_pos/{}'.format(working_dir,filename))
         lines = ['<s> {} </s> '.format(' '.join(k.strip().split())) for k in ftsp]
         title_pos = '<d> {}</d>'.format(''.join(lines))
-        ftsn = open('{}/title_spacy_ner/{}'.format(working_dir, filename))
+        ftsn = open('{}/answer_spacy_ner/{}'.format(working_dir, filename))
         lines = ['<s> {} </s> '.format(' '.join(k.strip().split())) for k in ftsn]
         title_ner = '<d> {}</d>'.format(''.join(lines))
         fhsl = open('{}/highlight_spacy_line/{}'.format(working_dir,filename))
@@ -78,18 +78,20 @@ for dataset in datasets:
     fw.close()
 
 dt = pd.DataFrame.from_dict(df,orient='columns')
-train, validate, test = np.split(dt.sample(frac=1), [int(.8*len(dt)), int(.1*len(dt))])
+train, validate = np.split(dt.sample(frac=1), [int(1*len(dt))])
 
 data = {}
-data['train'] = train
+data['test'] = train
 data['dev'] = validate
-data['test'] = test
-
+#data['test'] = test
+index = 0 
+#print (data['train'], data['train']['abstract'])
 vocab = Counter()
-for filetype in ['train','dev','test']:
-    writer = open('{}/{}.bin'.format(root_dir,filetype), 'wb')
+for filetype in ['test']:#['train','dev']:
     for article, abstract in zip(data[filetype]['article'].values,data[filetype]['abstract'].values):
-        tf_example = example_pb2.Example()
+        writer = open('{}/{}_{}.bin'.format(root_dir,filetype, index), 'wb')
+        tf_example = tf.train.Example()
+        index += 1 
         tf_example.features.feature['article'].bytes_list.value.extend([article.encode()])
         tf_example.features.feature['abstract'].bytes_list.value.extend([abstract.encode()])
         tf_example_str = tf_example.SerializeToString()
