@@ -33,7 +33,7 @@ FLAGS = tf.app.flags.FLAGS
 class Example(object):
   """Class representing a train/val/test example for text summarization."""
 
-  def __init__(self, article, abstract_sentences, vocab, hps):
+  def __init__(self, article, abstract_sentences, answer, vocab, hps):
     """Initializes the Example, performing tokenization and truncation to produce the encoder, decoder and target sequences, which are stored in self.
 
     Args:
@@ -48,13 +48,17 @@ class Example(object):
     start_decoding = vocab.word2id(data.START_DECODING)
     stop_decoding = vocab.word2id(data.STOP_DECODING)
 
-    # Process the article
+    # Process the article and answer
     article_words = article.split()
     if len(article_words) > hps.max_enc_steps:
       article_words = article_words[:hps.max_enc_steps]
+    answer_words = answer_words[:hps.max_ans_steps]
     self.enc_len = len(article_words) # store the length after truncation but before padding
     self.enc_input = [vocab.word2id(w) for w in article_words] # list of word ids; OOVs are represented by the id for UNK token
 
+    self.enc_answer_input = [vocab.word2id(w) for w in answer_words]
+    self.enc_answer_len = len(answer_words)
+    
     # Process the abstract
     abstract = ' '.join(abstract_sentences) # string
     abstract_words = abstract.split() # list of strings
@@ -77,6 +81,7 @@ class Example(object):
 
     # Store the original strings
     self.original_article = article
+    self.orign_answer = answer
     self.original_abstract = abstract
     self.original_abstract_sents = abstract_sentences
 
