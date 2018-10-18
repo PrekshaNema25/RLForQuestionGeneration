@@ -24,6 +24,7 @@ from tensorflow.core.example import example_pb2
 import operator
 import numpy as np
 np.random.seed(123)
+import tensorflow as tf 
 
 # <s> and </s> are used in the data files to segment the abstracts into sentences. They don't receive vocab ids.
 SENTENCE_START = '<s>'
@@ -64,7 +65,7 @@ class Vocab(object):
           print('Warning: incorrectly formatted line in vocabulary file: %s\n' % line)
           continue
         w = pieces[0].lower()
-        if w in [SENTENCE_START, SENTENCE_END, UNKNOWN_TOKEN, PAD_TOKEN, START_DECODING, STOP_DECODING]:
+        if w in [UNKNOWN_TOKEN, PAD_TOKEN, START_DECODING, STOP_DECODING]:
           raise Exception('<s>, </s>, [UNK], [PAD], [START] and [STOP] shouldn\'t be in the vocab file, but %s is' % w)
         if w in self._word_to_id:
           print("Duplicate:",w)
@@ -154,6 +155,21 @@ def example_generator(data_path, single_pass):
   Yields:
     Deserialized tf.Example.
   """
+  filelist = glob.glob(data_path)
+  filelist = sorted(filelist)
+  all_samples = []
+  for f in filelist:
+    reader = open(f, 'rb')
+    len_bytes = reader.read(8)
+    if not len_bytes: continue # finished reading this file
+    str_len = struct.unpack('q', len_bytes)[0]
+    example_str = struct.unpack('%ds' % str_len, reader.read(str_len))[0]
+    example_str = tf.train.Example.FromString(example_str) 
+    all_samples.append(example_str)
+
+  for y in all_samples:
+   yield y 
+  """
   while True:
     filelist = glob.glob(data_path) # get the list of datafiles
     assert filelist, ('Error: Empty filelist at %s' % data_path) # check filelist isn't empty
@@ -162,17 +178,18 @@ def example_generator(data_path, single_pass):
     else:
       random.shuffle(filelist)
     for f in filelist:
+      print (f)
       reader = open(f, 'rb')
       while True:
         len_bytes = reader.read(8)
         if not len_bytes: break # finished reading this file
         str_len = struct.unpack('q', len_bytes)[0]
         example_str = struct.unpack('%ds' % str_len, reader.read(str_len))[0]
-        yield example_pb2.Example.FromString(example_str)
+        yield tf.train.Example.FromString(example_str)
     if single_pass:
       print("example_generator completed reading all datafiles. No more data.")
       break
-
+   """
 
 def article2ids(article_words, vocab):
   """Map the article words to their ids. Also return a list of OOVs in the article.
@@ -279,6 +296,7 @@ def abstract2sents(abstract):
 def show_art_oovs(article, vocab):
   """Returns the article string, highlighting the OOVs by placing __underscores__ around them"""
   unk_token = vocab.word2id(UNKNOWN_TOKEN)
+  article = article.decode('utf-8')
   words = article.split(' ')
   words = [("__%s__" % w) if vocab.word2id(w)==unk_token else w for w in words]
   out_str = ' '.join(words)

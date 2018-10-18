@@ -59,12 +59,12 @@ tf.app.flags.DEFINE_integer('batch_queue_threads', 2, 'Number of batch queue thr
 tf.app.flags.DEFINE_integer('bucketing_cache_size', 100, 'Number of bucketing cache size.')
 
 # Hyperparameters
-tf.app.flags.DEFINE_integer('enc_hidden_dim', 256, 'dimension of RNN hidden states')
-tf.app.flags.DEFINE_integer('dec_hidden_dim', 256, 'dimension of RNN hidden states')
+tf.app.flags.DEFINE_integer('enc_hidden_dim', 128, 'dimension of RNN hidden states')
+tf.app.flags.DEFINE_integer('dec_hidden_dim', 128, 'dimension of RNN hidden states')
 tf.app.flags.DEFINE_integer('emb_dim', 128, 'dimension of word embeddings')
 tf.app.flags.DEFINE_integer('batch_size', 64, 'minibatch size')
 tf.app.flags.DEFINE_integer('max_enc_steps', 400, 'max timesteps of encoder (max source text tokens)')
-tf.app.flags.DEFINE_integer('max_dec_steps', 100, 'max timesteps of decoder (max summary tokens)')
+tf.app.flags.DEFINE_integer('max_dec_steps', 20, 'max timesteps of decoder (max summary tokens)')
 tf.app.flags.DEFINE_integer('beam_size', 4, 'beam size for beam search decoding.')
 tf.app.flags.DEFINE_integer('min_dec_steps', 35, 'Minimum sequence length of generated summary. Applies only for beam search decoding mode')
 tf.app.flags.DEFINE_integer('max_iter', 55000, 'max number of iterations')
